@@ -24,7 +24,7 @@ candidate's own laptop.
 |---|---|
 | Language | **Node** — Render autodetects `Go` because of `packages/agent-go/go.mod` |
 | Root Directory | `packages/backend` |
-| Build Command | `npm install --include=dev && npm run build` |
+| Build Command | `npm install && npm run build` |
 | Start Command | `npm start` |
 
 Environment variables:
@@ -40,10 +40,11 @@ NODE_ENV         = production
 - `CORS_ORIGIN` takes a comma-separated list if you also want Vercel preview
   domains: `https://your-app.vercel.app,https://your-app-git-dev.vercel.app`
 - `PORT` is injected by Render — do not set it.
-- `--include=dev` is not optional. `NODE_ENV=production` makes npm skip
-  devDependencies, and that is where `typescript` and every `@types/*` package
-  live — without it `tsc` fails with `TS7016: Could not find a declaration file
-  for module 'express'` and the deploy exits with status 2.
+- The build needs devDependencies (`typescript` and every `@types/*`), which npm
+  omits automatically under `NODE_ENV=production`. `packages/backend/.npmrc`
+  forces them back on, so the plain `npm install` above is enough. Without that
+  file the deploy fails with `TS7016: Could not find a declaration file for
+  module 'express'` and exits with status 2.
 - `NODE_ENV=production` turns on `trust proxy`, without which every consent
   record stores Render's proxy IP instead of the candidate's, and the rate
   limiter treats all traffic as one client. Override with `TRUST_PROXY` if your
