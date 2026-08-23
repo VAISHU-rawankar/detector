@@ -53,6 +53,27 @@ export function interviewRouter(io: Server) {
     res.json(interview);
   });
 
+  // A candidate's own sessions, so landing on the app without an invite link in
+  // hand is not a dead end — they can resume whatever is already in progress.
+  router.get('/my/sessions', authMiddleware, async (req, res) => {
+    const user = (req as any).user;
+    const sessions = await InterviewSession.find({ candidate: user.userId })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .populate('interview', 'title requireAgent')
+      .lean();
+
+    res.json(
+      sessions.map((s) => ({
+        id: String(s._id),
+        status: s.status,
+        startedAt: s.startedAt ?? null,
+        title: (s.interview as any)?.title ?? 'Interview',
+        requireAgent: (s.interview as any)?.requireAgent ?? false,
+      })),
+    );
+  });
+
   // Interviewer's own interviews, newest first, with how many candidates have
   // joined each one.
   router.get('/interviews', authMiddleware, requireRole('INTERVIEWER', 'ADMIN'), async (req, res) => {

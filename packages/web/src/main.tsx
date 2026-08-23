@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import {
   BrowserRouter, Navigate, Route, Routes, useParams,
 } from 'react-router-dom';
+import CandidateHome from './pages/CandidateHome';
 import CandidateRoom from './pages/CandidateRoom';
 import InterviewerDashboard from './pages/InterviewerDashboard';
 import InterviewerHome from './pages/InterviewerHome';
@@ -45,17 +46,7 @@ function MonitorRoute() {
 
 function Home() {
   const user = useAuth((s) => s.user);
-  if (user?.role === 'CANDIDATE') {
-    return (
-      <div style={wrap}>
-        <h1>Nothing to join yet</h1>
-        <p style={{ color: '#6b7280' }}>
-          Open the invite link your interviewer sent you to start a session.
-        </p>
-      </div>
-    );
-  }
-  return <InterviewerHome />;
+  return user?.role === 'CANDIDATE' ? <CandidateHome /> : <InterviewerHome />;
 }
 
 function App() {
