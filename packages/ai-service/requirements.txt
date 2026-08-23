@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+httpx
+# 5.x dropped the bundled Haar cascade XML files that count_faces() relies on.
+opencv-python-headless<5
+numpy

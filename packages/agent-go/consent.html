@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Interview Integrity Agent — Consent</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    max-width: 560px; margin: 48px auto; padding: 0 20px; line-height: 1.55;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: #6b7280; margin-top: 0; font-size: 14px; }
+  .box { background: #f5f5f5; border-radius: 8px; padding: 16px; margin: 20px 0; }
+  @media (prefers-color-scheme: dark) { .box { background: #1f2124; } }
+  ul { padding-left: 20px; margin: 8px 0 0; }
+  li { margin: 4px 0; }
+  label { display: block; margin: 14px 0; }
+  input[type=text] {
+    width: 100%; box-sizing: border-box; padding: 10px; font-size: 14px;
+    font-family: ui-monospace, monospace; border: 1px solid #d1d5db; border-radius: 8px;
+  }
+  .row { display: flex; gap: 10px; align-items: center; margin-top: 18px; }
+  button { padding: 11px 18px; border-radius: 8px; font-size: 14px; cursor: pointer; border: 0; }
+  .primary { background: #2563eb; color: #fff; }
+  .primary:disabled { background: #9ca3af; cursor: not-allowed; }
+  .ghost { background: transparent; border: 1px solid #d1d5db; }
+  .err { color: #b91c1c; font-size: 13px; min-height: 18px; }
+  .done { text-align: center; padding: 40px 0; }
+</style>
+</head>
+<body>
+<div id="form">
+  <h1>Interview Integrity Agent</h1>
+  <p class="sub">This agent is visible by design. Nothing starts until you consent.</p>
+
+  <div class="box">
+    While the interview is running, this agent reports:
+    <ul>
+      <li>Names of running applications and their code signers</li>
+      <li>Whether any window is hidden from screen capture</li>
+      <li>Names of audio devices</li>
+    </ul>
+    It does <b>not</b> record your screen, keystrokes, files, or browsing. It sends
+    metadata only, and stops as soon as the interview ends.
+  </div>
+
+  <label>
+    Session ID (paste from your interview page)
+    <input type="text" id="session" placeholder="e.g. 6a8adfd64dbb305fffe02e3b" autocomplete="off" />
+  </label>
+
+  <label>
+    <input type="checkbox" id="agree" />
+    I consent to running this integrity agent for this interview.
+  </label>
+
+  <div class="err" id="err"></div>
+
+  <div class="row">
+    <button class="primary" id="go">Start monitoring</button>
+    <button class="ghost" id="no">Decline &amp; quit</button>
+  </div>
+</div>
+
+<div id="done" class="done" hidden>
+  <h1 id="doneTitle"></h1>
+  <p class="sub" id="doneText"></p>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  function finish(title, text) {
+    $('form').hidden = true;
+    $('doneTitle').textContent = title;
+    $('doneText').textContent = text;
+    $('done').hidden = false;
+  }
+
+  $('go').onclick = async () => {
+    const sessionId = $('session').value.trim();
+    if (!sessionId) return ($('err').textContent = 'Please paste the session ID.');
+    if (!$('agree').checked) return ($('err').textContent = 'Please tick the consent box.');
+    $('err').textContent = '';
+    $('go').disabled = true;
+    try {
+      const res = await fetch('/consent', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionId, consented: true }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      finish('Monitoring started', 'You can close this tab. The agent keeps running in its window until the interview ends.');
+    } catch (e) {
+      $('go').disabled = false;
+      $('err').textContent = String(e.message || e);
+    }
+  };
+
+  $('no').onclick = async () => {
+    await fetch('/decline', { method: 'POST' }).catch(() => {});
+    finish('Consent declined', 'The agent has exited without monitoring anything.');
+  };
+</script>
+</body>
+</html>

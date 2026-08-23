@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+*.log
+pgdata/
+
+# Go agent build output
+packages/agent-go/*.exe
+packages/agent-go/agent-mac
+
+# Vite cache
+.vite/
+*.exe~

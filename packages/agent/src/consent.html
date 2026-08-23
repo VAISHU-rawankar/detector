@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  body { font-family: system-ui, sans-serif; padding: 24px; color: #1a1a1a; }
+  h2 { margin-top: 0; }
+  .box { background: #f5f5f5; border-radius: 8px; padding: 16px; font-size: 14px; line-height: 1.5; }
+  ul { padding-left: 18px; }
+  .row { margin: 16px 0; display: flex; align-items: center; gap: 8px; }
+  input[type=text] { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
+  button { padding: 10px 16px; border: 0; border-radius: 6px; cursor: pointer; font-size: 14px; }
+  .primary { background: #2563eb; color: #fff; }
+  .primary:disabled { background: #9ca3af; cursor: not-allowed; }
+  .ghost { background: #e5e7eb; }
+</style>
+</head>
+<body>
+  <h2>Interview Integrity Agent</h2>
+  <div class="box">
+    <p>This agent monitors your device <b>only during the interview</b> to help maintain
+    integrity. It is <b>not hidden</b> — a tray icon stays visible the whole time, and it
+    stops automatically when the interview ends.</p>
+    <p>While active, it reports the following <b>metadata only</b>:</p>
+    <ul>
+      <li>Names of running applications and their window titles</li>
+      <li>Application code-signing publisher (to identify known AI tools)</li>
+      <li>Windows that hide themselves from screen capture</li>
+      <li>Virtual/loopback audio devices</li>
+    </ul>
+    <p>It does <b>not</b> log your keystrokes, read your files, or capture your screen contents.</p>
+  </div>
+
+  <div class="row">
+    <label style="width:100%">Session ID (from your interview link)
+      <input id="sid" type="text" placeholder="paste session id" />
+    </label>
+  </div>
+  <div class="row">
+    <input id="agree" type="checkbox" />
+    <label for="agree">I understand and consent to interview integrity monitoring.</label>
+  </div>
+
+  <div class="row">
+    <button id="start" class="primary" disabled>Start monitoring</button>
+    <button id="decline" class="ghost">Decline &amp; exit</button>
+  </div>
+
+<script>
+  const agree = document.getElementById('agree');
+  const sid = document.getElementById('sid');
+  const start = document.getElementById('start');
+  function refresh() { start.disabled = !(agree.checked && sid.value.trim()); }
+  agree.onchange = refresh; sid.oninput = refresh;
+  start.onclick = () => window.agent.giveConsent(sid.value.trim());
+  document.getElementById('decline').onclick = () => window.agent.declineConsent();
+</script>
+</body>
+</html>

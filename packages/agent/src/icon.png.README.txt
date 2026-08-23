@@ -1,0 +1,1 @@
+Place a 32x32 PNG tray icon here named icon.png
