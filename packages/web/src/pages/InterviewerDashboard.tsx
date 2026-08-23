@@ -102,9 +102,15 @@ export default function InterviewerDashboard({ sessionId }: { sessionId: string 
   const verdict = (() => {
     if (risk.hasStrongAiSignal) {
       return {
-        headline: 'AI-assistance tool signals present',
+        headline: multipleFaces > 0
+          ? 'AI-assistance tool signals present, and another person on camera'
+          : 'AI-assistance tool signals present',
         detail:
-          'One or more known tools were positively identified while this session was being monitored. Review the evidence below before acting.',
+          'One or more known tools were positively identified while this session was being monitored.' +
+          (multipleFaces > 0
+            ? ' Separately, more than one face was seen in frame — a different kind of violation, so weigh the two independently.'
+            : '') +
+          ' Review the evidence below before acting.',
       };
     }
     if (toolSummary.length > 0) {
