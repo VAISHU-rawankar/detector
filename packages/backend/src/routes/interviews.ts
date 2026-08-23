@@ -193,8 +193,11 @@ export function interviewRouter(io: Server) {
     if (session.status === 'PENDING') {
       return res.status(400).json({ error: 'Consent required before starting' });
     }
+    // Already running: a reload, or a candidate coming back after their browser
+    // crashed, must be able to re-enter rather than being locked out mid-interview.
+    if (session.status === 'ACTIVE') return res.json(session);
     if (session.status !== 'CONSENTED') {
-      return res.status(409).json({ error: `Session is already ${session.status}` });
+      return res.status(409).json({ error: `Session is ${session.status}` });
     }
 
     session.status = 'ACTIVE';
