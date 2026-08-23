@@ -35,11 +35,17 @@ JWT_SECRET       = <64+ random hex chars>
 DETECTION_WEBHOOK_SECRET = <64+ random hex chars>
 CORS_ORIGIN      = https://your-app.vercel.app
 NODE_ENV         = production
+DEMO_MODE        = true
 ```
 
 - `CORS_ORIGIN` takes a comma-separated list if you also want Vercel preview
   domains: `https://your-app.vercel.app,https://your-app-git-dev.vercel.app`
 - `PORT` is injected by Render — do not set it.
+- `DEMO_MODE=true` removes the sign-in step: visitors are signed in
+  automatically as one shared interviewer account or one shared candidate
+  account, depending on the page they open. It is an authentication bypass and
+  everyone shares those two accounts, so **turn it off for real interviews** —
+  the normal login form comes back when it is off.
 - The build needs devDependencies (`typescript` and every `@types/*`), which npm
   omits automatically under `NODE_ENV=production`. `packages/backend/.npmrc`
   forces them back on, so the plain `npm install` above is enough. Without that

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../store/auth';
+import { switchDemoRole } from '../lib/demoAuth';
 import { card, errorBox, field, ghost, input, page, primary } from '../ui';
 
 interface Interview {
@@ -26,7 +27,7 @@ const statusColour: Record<string, string> = {
 };
 
 export default function InterviewerHome() {
-  const { user, logout } = useAuth();
+  const user = useAuth((s) => s.user);
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [title, setTitle] = useState('');
   const [requireAgent, setRequireAgent] = useState(true);
@@ -95,7 +96,11 @@ export default function InterviewerHome() {
             Signed in as {user?.fullName} ({user?.email})
           </p>
         </div>
-        <button style={ghost} onClick={logout}>Sign out</button>
+        {/* One browser holds one token, so seeing the candidate's side means
+            swapping accounts rather than opening a second session. */}
+        <button style={ghost} onClick={() => switchDemoRole('CANDIDATE')}>
+          View as candidate
+        </button>
       </div>
 
       {error && <div style={errorBox}>{error}</div>}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../store/auth';
+import { switchDemoRole } from '../lib/demoAuth';
 import { card, errorBox, ghost, input, page, primary } from '../ui';
 
 interface MySession {
@@ -20,7 +21,7 @@ const statusColour: Record<string, string> = {
 const OPEN = ['PENDING', 'CONSENTED', 'ACTIVE', 'PAUSED'];
 
 export default function CandidateHome() {
-  const { user, logout } = useAuth();
+  const user = useAuth((s) => s.user);
   const navigate = useNavigate();
   const [sessions, setSessions] = useState<MySession[] | null>(null);
   const [invite, setInvite] = useState('');
@@ -54,7 +55,9 @@ export default function CandidateHome() {
             Signed in as {user?.fullName} ({user?.email})
           </p>
         </div>
-        <button style={ghost} onClick={logout}>Sign out</button>
+        <button style={ghost} onClick={() => switchDemoRole('INTERVIEWER')}>
+          View as interviewer
+        </button>
       </div>
 
       {error && <div style={errorBox}>{error}</div>}

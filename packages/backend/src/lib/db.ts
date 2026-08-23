@@ -15,6 +15,10 @@ export const ENV = {
   // Behind Render/Vercel/any reverse proxy this must be on, or req.ip is the
   // proxy's address — which would put the wrong IP on every consent record and
   // make the rate limiter treat all traffic as one client.
+  // Turns on POST /api/auth/demo, which hands out a token for a shared demo
+  // account with no password. That is an authentication bypass, so it is off
+  // unless explicitly switched on.
+  DEMO_MODE: process.env.DEMO_MODE === 'true',
   TRUST_PROXY: process.env.TRUST_PROXY ?? (process.env.NODE_ENV === 'production' ? '1' : ''),
 };
 

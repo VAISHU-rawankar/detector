@@ -2,6 +2,8 @@ import { asyncRouter } from '../lib/asyncRouter';
 import { z } from 'zod';
 import { User } from '../models';
 import { hashPassword, verifyPassword, signToken } from '../lib/auth';
+import { ENV } from '../lib/db';
+import crypto from 'crypto';
 
 export const authRouter = asyncRouter();
 
@@ -40,5 +42,43 @@ authRouter.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   const token = signToken({ userId: user.id, role: user.role as any, companyId: (user.company as any)?.toString() ?? null });
+  res.json({ token, user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role } });
+});
+
+// ── Demo mode ───────────────────────────────────────────────────────────────
+// Signs the visitor straight in as a shared demo account so the app can be
+// walked through without anyone typing credentials.
+//
+// This is deliberately an authentication bypass, and everyone who opens the
+// link shares these two accounts: whatever one visitor creates, the next one
+// sees. Fine for a demo, wrong for real interviews — hence the env switch.
+const DEMO_ACCOUNTS = {
+  INTERVIEWER: { email: 'demo-interviewer@example.com', fullName: 'Demo Interviewer' },
+  CANDIDATE: { email: 'demo-candidate@example.com', fullName: 'Demo Candidate' },
+} as const;
+
+const demoSchema = z.object({ role: z.enum(['INTERVIEWER', 'CANDIDATE']) });
+
+authRouter.post('/demo', async (req, res) => {
+  if (!ENV.DEMO_MODE) {
+    return res.status(403).json({ error: 'Demo mode is off. Set DEMO_MODE=true on the server to enable it.' });
+  }
+  const parsed = demoSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Unknown role' });
+
+  const spec = DEMO_ACCOUNTS[parsed.data.role];
+  let user = await User.findOne({ email: spec.email });
+  if (!user) {
+    // Random unusable password: the account is only ever reachable through this
+    // endpoint, so it must not also be guessable through /login.
+    user = await User.create({
+      email: spec.email,
+      passwordHash: await hashPassword(crypto.randomBytes(32).toString('hex')),
+      fullName: spec.fullName,
+      role: parsed.data.role,
+    });
+  }
+
+  const token = signToken({ userId: user.id, role: user.role as any, companyId: null });
   res.json({ token, user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role } });
 });
