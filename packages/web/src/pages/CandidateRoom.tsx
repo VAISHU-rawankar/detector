@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useProctorMonitor } from '../hooks/useProctorMonitor';
 import { api, BACKEND } from '../lib/api';
@@ -32,7 +32,7 @@ export default function CandidateRoom({ sessionId, requireAgent }: { sessionId: 
   // Showing detection results to the candidate would tell them exactly what to
   // avoid, so this is limited to demo sessions.
   const demo = useAuth((s) => s.demo);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const camStreamRef = useRef<MediaStream | null>(null);
 
   const { markAnswer, markQuestionShown, watchScreenShare } = useProctorMonitor(socket, sessionId, started);
@@ -44,13 +44,15 @@ export default function CandidateRoom({ sessionId, requireAgent }: { sessionId: 
     return () => { s.disconnect(); };
   }, [sessionId]);
 
-  // The <video> element does not exist until `started` flips to true, so the
-  // stream has to be attached here rather than inside startInterview().
-  useEffect(() => {
-    if (started && videoRef.current && camStreamRef.current) {
-      videoRef.current.srcObject = camStreamRef.current;
-    }
-  }, [started]);
+  // A callback ref rather than an effect: the element is created when `started`
+  // flips, but it is also re-created whenever the surrounding tree changes shape
+  // (the demo layout switches from a single column to a grid once the persisted
+  // auth state loads). An effect keyed on `started` misses those remounts and
+  // leaves the new element with no stream, which renders as a black box.
+  const attachVideo = useCallback((el: HTMLVideoElement | null) => {
+    videoRef.current = el;
+    if (el && camStreamRef.current) el.srcObject = camStreamRef.current;
+  }, []);
 
   // Release camera/mic when the room unmounts.
   useEffect(() => () => {
@@ -220,7 +222,7 @@ export default function CandidateRoom({ sessionId, requireAgent }: { sessionId: 
   const room = (
     <>
       <h2 style={{ marginTop: 0 }}>Interview in progress</h2>
-      <video ref={videoRef} autoPlay muted playsInline style={{ width: 240, borderRadius: 8, background: '#000' }} />
+      <video ref={attachVideo} autoPlay muted playsInline style={{ width: 240, borderRadius: 8, background: '#000' }} />
       <p style={{ color: '#6b7280' }}>Monitoring is active. Do not exit fullscreen or switch tabs.</p>
 
       {finished ? (
