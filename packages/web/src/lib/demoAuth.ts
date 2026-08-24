@@ -17,7 +17,7 @@ export async function signInAsDemo(role: DemoRole): Promise<boolean> {
       method: 'POST',
       body: JSON.stringify({ role }),
     });
-    useAuth.getState().setAuth(res.token, res.user);
+    useAuth.getState().setAuth(res.token, res.user, true);
     return true;
   } catch {
     return false;

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useProctorMonitor } from '../hooks/useProctorMonitor';
 import { api, BACKEND } from '../lib/api';
+import { useAuth } from '../store/auth';
+import { LiveMonitorPanel } from '../components/LiveMonitorPanel';
 
 // Optional webcam frame analyser. If it is not running, monitoring continues
 // without face signals rather than blocking the interview.
@@ -27,6 +29,9 @@ export default function CandidateRoom({ sessionId, requireAgent }: { sessionId: 
   const [answer, setAnswer] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [finished, setFinished] = useState(false);
+  // Showing detection results to the candidate would tell them exactly what to
+  // avoid, so this is limited to demo sessions.
+  const demo = useAuth((s) => s.demo);
   const videoRef = useRef<HTMLVideoElement>(null);
   const camStreamRef = useRef<MediaStream | null>(null);
 
@@ -212,9 +217,9 @@ export default function CandidateRoom({ sessionId, requireAgent }: { sessionId: 
 
   const current = questions[qIndex];
 
-  return (
-    <div style={wrap}>
-      <h2>Interview in progress</h2>
+  const room = (
+    <>
+      <h2 style={{ marginTop: 0 }}>Interview in progress</h2>
       <video ref={videoRef} autoPlay muted playsInline style={{ width: 240, borderRadius: 8, background: '#000' }} />
       <p style={{ color: '#6b7280' }}>Monitoring is active. Do not exit fullscreen or switch tabs.</p>
 
@@ -249,6 +254,28 @@ export default function CandidateRoom({ sessionId, requireAgent }: { sessionId: 
           </div>
         </div>
       )}
+    </>
+  );
+
+  // In a demo there is nobody on the other screen, so the live report sits
+  // beside the interview instead — otherwise monitoring looks like it is doing
+  // nothing at all.
+  if (!demo) return <div style={wrap}>{room}</div>;
+
+  return (
+    <div style={{
+      fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+      maxWidth: 1100, margin: '32px auto', padding: '0 20px', lineHeight: 1.55,
+      display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: 24, alignItems: 'start',
+    }}>
+      <div>{room}</div>
+      <div style={{ position: 'sticky', top: 24 }}>
+        <LiveMonitorPanel socket={socket} sessionId={sessionId} />
+        <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 10, lineHeight: 1.5 }}>
+          Shown here because this is a demo. In a real interview the candidate
+          never sees this — it would tell them exactly what to avoid.
+        </p>
+      </div>
     </div>
   );
 }

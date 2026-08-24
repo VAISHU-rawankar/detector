@@ -11,7 +11,11 @@ export interface User {
 interface AuthState {
   token: string | null;
   user: User | null;
-  setAuth: (token: string, user: User) => void;
+  // True when this session was started by demo auto-login rather than a real
+  // sign-in. The candidate room uses it to decide whether showing live
+  // detection results on the candidate's own screen is acceptable.
+  demo: boolean;
+  setAuth: (token: string, user: User, demo?: boolean) => void;
   logout: () => void;
 }
 
@@ -23,8 +27,9 @@ export const useAuth = create<AuthState>()(
     (set) => ({
       token: null,
       user: null,
-      setAuth: (token, user) => set({ token, user }),
-      logout: () => set({ token: null, user: null }),
+      demo: false,
+      setAuth: (token, user, demo = false) => set({ token, user, demo }),
+      logout: () => set({ token: null, user: null, demo: false }),
     }),
     { name: 'iip-auth' },
   ),
